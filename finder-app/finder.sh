@@ -1,4 +1,6 @@
-#!/bin/bash
+#!/bin/sh
+
+#Matt S changed to sh since ARM build does not have SH
 
 # Updated 12/10/2022
 # $1 = Path to a Directory 
@@ -6,7 +8,7 @@
 # Ouputs = String containing number of files and lines in file with said string
 
 #Exit with error 1 if either argument is unspecified
-if [[ $# -lt 2 ]]
+if [ $# -ne 2 ]
 then 
     echo "Missing Argument(s), Exiting..."
     exit 1
@@ -19,29 +21,36 @@ then
     exit 1
 fi
 
+
+filecount=$( ls -1 $1 | wc -l ) 
+linecount=$( grep -r $2 $1 | wc -l )
+
+# Note: Had to update this script for assignment 3 since ARM build supports SH and not BASH!!!
+
+
 #Recursively Grep for the pattern and exclude results where the pattern isn't matched
-
-filecount=0
-linecount=0
-regex='\:([0-9])+'
-for line in $(grep -cR $2 $1 | grep -v :0);
-    #Note, lesson learned! piping text into loop causes it to run in a subshell
-    #Hence it cannot update globals like $linecount in a 
-
-    do
-    #echo $line
-    
-    #Could we count these lines without a regex match? 
-    if [[ $line =~ $regex ]]
-    then 
-        match="${BASH_REMATCH[1]}"
-        linecount=$((linecount + match))
-    fi
-
-    filecount=$((filecount+1))
-    #echo $filecount
-    #echo $linecount 
-done 
+# filecount=0
+# linecount=0
+# regex='\:([0-9])+'
+# for line in $(grep -cR $2 $1 | grep -v :0);
+#    #Note, lesson learned! piping text into loop causes it to run in a subshell
+#   #Hence it cannot update globals like $linecount in a 
+#
+#    do
+#   #echo $line
+#    
+#     #Could we count these lines without a regex match? 
+#    if [[ $line =~ $regex ]]
+#    then 
+#        match="${BASH_REMATCH[1]}"
+#        linecount=$((linecount + match))
+#    fi
+#
+#    filecount=$((filecount+1))
+#    #echo $filecount
+#    #echo $linecount 
+# done 
 
 #Echo string as mentioned in the assignment
 echo The number of files are $filecount and the number of matching lines are $linecount
+exit 0
