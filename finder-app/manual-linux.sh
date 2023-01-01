@@ -80,7 +80,10 @@ mkdir -p rootfs
 cd rootfs
 
 #reference slide 11 of lecture slides
+
 mkdir -p bin dev etc home lib lib64 proc sbin sys tmp usr var
+
+#Note leading / infront of usr/lib was needed to suceed with actions, but not locally... why?
 mkdir -p usr/bin /usr/lib usr/sbin
 mkdir -p var/log
 
