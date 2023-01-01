@@ -136,6 +136,8 @@ SYSROOT=$(${CROSS_COMPILE}gcc --print-sysroot)
 # lrwxrwxrwx 1 matt matt 19 Jul  1  2021 /home/matt/gcc-arm/gcc-arm-10.3-2021.07-x86_64-aarch64-none-linux-gnu/bin/../aarch64-none-linux-gnu/libc/lib/ld-linux-aarch64.so.1 -> ../lib64/ld-2.33.so
 
 cp -a ${SYSROOT}/lib/ld-linux-aarch64.so.1 ./lib/
+cp -a ${SYSROOT}/lib/ld-linux-aarch64.so.1 ./lib64/
+cp -a ${SYSROOT}/lib64/ld-2.33.so ./lib/
 cp -a ${SYSROOT}/lib64/ld-2.33.so ./lib64/
 
 # ~/gcc-arm/gcc-arm-10.3-2021.07-x86_64-aarch64-none-linux-gnu/aarch64-none-linux-gnu/libc/lib64$ ls -l libm.so.6
