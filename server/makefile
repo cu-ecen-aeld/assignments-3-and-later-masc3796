@@ -5,3 +5,4 @@ default:
 
 clean: 
 	$(RM) aesdsocket
+	$(RM) /var/tmp/aesdsocketdata
