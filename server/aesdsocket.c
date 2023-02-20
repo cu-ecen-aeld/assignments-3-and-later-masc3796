@@ -51,6 +51,7 @@ int main(int argc, char *argv[])
 	socklen_t addr_size;	
 	struct sockaddr_storage their_addr;
 	int new_fd;
+	char recvbuf[BUFSIZE];
 	char buf[BUFSIZE];
 	long numbytes;
 	char *writestr;
@@ -58,6 +59,9 @@ int main(int argc, char *argv[])
 	FILE *outputfile;
 	int yes; 
 	char s[INET6_ADDRSTRLEN];
+	bool rx_done;
+	long rx_index;
+	long rx_numbytes;
 	
 	//Bind signals to handler	
 	signal(SIGINT, signal_handler);
@@ -137,37 +141,53 @@ int main(int argc, char *argv[])
         printf("Accepted connection from %s\n", s);
         syslog(LOG_INFO, "Accepted connection from %s\n", s);
 	 	
-	 	numbytes = recv(new_fd, buf, BUFSIZE-1, 0);
-	 	printf("numbytes: %ld\n", numbytes);
 	 	
-	 	if (numbytes == -1) {
-	 		close(new_fd);
-		    printf("Closed connection from %s\n", s);
-		    syslog(LOG_INFO, "Closed connection from %s\n", s);	
-	 		perror("recv");
-	 		exit(-1);
-	 	}
-	 	
-		buf[numbytes] = '\0'; //Null terminate the buffer!
+		//This looping is needed to handle long strings >16384 chars
+		rx_done = false;
+		rx_index = 0;
+		rx_numbytes = 0;
+		while (!rx_done) {
 		
-		//sockettest.sh fails without this check!
-		/*
-        if (buf[numbytes - 1] != '\n')
-        {
-			buf[numbytes] = '\n';
-			buf[numbytes+1] = '\0'; //Null terminate the buffer!
-        }*/
-		
-		
+			//recevie a packet
+		 	numbytes = recv(new_fd, recvbuf, BUFSIZE-1, 0);
+			rx_numbytes += numbytes;
+
+		 	//Check for Errors
+			if (numbytes == -1) {
+		 		close(new_fd);
+				printf("Closed connection from %s\n", s);
+				syslog(LOG_INFO, "Closed connection from %s\n", s);	
+		 		perror("recv");
+		 		exit(-1);
+		 	}
+		 	
+		 	printf("numbytes: %ld\n", numbytes);
+		 	
+		 	//copy recv buffer into main buffer
+		 	for(i=0; i<numbytes; i++) {
+				buf[rx_index + i] = recvbuf[i];
+		 	}
+		 	
+			rx_index += numbytes;
+			
+			//if the packet was \n terminated
+			if(recvbuf[numbytes-1] == '\n') {
+				rx_done = true;
+			}		 	
+		}
+		//make_sure the buffer is null-terminated
+	 	buf[rx_numbytes] = '\0';
+ 		
 		//Put buffer data in a string
 
-		writestr = (char *)malloc(numbytes * sizeof(char));
-		
-
-		for (i = 0; i <= numbytes; i++)
+		writestr = (char *)malloc(rx_numbytes * sizeof(char));
+		for (i = 0; i <= rx_numbytes; i++)
 		{
 			writestr[i] = buf[i];
-		} 
+		}
+		
+
+
 		
 		//Write the data to a file
 		outputfile = fopen(OUTPUT_FILE_PATH, "a+");
