@@ -19,6 +19,8 @@
 #include <netdb.h>
 #include <syslog.h>
 #include <stdbool.h>
+#include <linux/fs.h>
+#include <fcntl.h>
 
 bool graceful_exit;
 int sockfd;	
@@ -62,12 +64,21 @@ int main(int argc, char *argv[])
 	bool rx_done;
 	long rx_index;
 	long rx_numbytes;
-	
+	bool daemon;
+	pid_t pid;	
+		
 	//Bind signals to handler	
 	signal(SIGINT, signal_handler);
 	signal(SIGTERM, signal_handler);
 	sleep(1);
 	
+	//check the args to decide if daemon mode has been specified
+	daemon = false;
+	if (argc >= 2 && (strcmp(argv[1], "-d") == 0)) {
+		daemon = true;
+	}
+	
+	printf("daemon mode: %d\n", daemon);
 
 	//use getaddrinfo to set up memory	
 	memset(&hints, 0, sizeof hints);
@@ -111,6 +122,47 @@ int main(int argc, char *argv[])
 
 	//Free up this struct now that its not needed 
 	freeaddrinfo(res);
+	
+	//handle daemon setup if needed
+	if(daemon) {
+		/* create new process */
+		pid = fork();
+
+		if (pid == -1) {
+			perror("fork");
+			return(-1);
+		}
+		
+		else if(pid != 0) {
+			exit(0);
+		}
+
+		/* create new session and process group */
+		ret = setsid();
+		if (ret == -1) {
+			perror("setsid");
+			return(-1);
+		}
+
+		/* set the working directory to the root directory */
+		ret = chdir ("/");
+		if (ret == -1) {
+			return -1;
+		}
+
+		/* close all open files--NR_OPEN is overkill, but works */
+		//???
+		//	for (i = 0; i < NR_OPEN; i++)
+		//	close(i);
+
+		/* redirect fd's 0,1,2 to /dev/null */
+
+		open ("/dev/null", O_RDWR);	//stdin
+		dup (0);	//stdout
+		dup (0); 	//stderr		
+	}
+	
+	
 
 	//listen for a connecton on the socket
 	ret = listen(sockfd, BACKLOG);
@@ -178,17 +230,16 @@ int main(int argc, char *argv[])
 		}
 	 	printf("rx_numbytes: %ld\n", rx_numbytes);
 	 	
-	 	
 		//make_sure the buffer is null-terminated
 	 	buf[rx_numbytes] = '\0';
+	 	rx_numbytes += 1;
  		
 		//Put buffer data in a string
 		writestr = (char *)malloc(rx_numbytes * sizeof(char));
-		for (i = 0; i <= rx_numbytes; i++)
+		for (i = 0; i < rx_numbytes; i++)
 		{
 			writestr[i] = buf[i];
 		}
-		
 
 		//Write the data to a file
 		outputfile = fopen(OUTPUT_FILE_PATH, "a+");
@@ -197,13 +248,12 @@ int main(int argc, char *argv[])
 		//cleanup
 		free(writestr);
 		
-		
 		//now readback the whole file
         fseek(outputfile, 0, SEEK_SET); 		  // go to the beginning of the file
         memset(buf, 0, BUFSIZE * sizeof(buf[0])); // zeroize the receive buffer
         while (fgets(buf, BUFSIZE, outputfile) != NULL)
         {
-        	printf("read from file: %ld\n", strlen(buf));
+        	//printf("read from file: %ld\n", strlen(buf));
 	        ret = send(new_fd, buf, strlen(buf), 0);
             if (ret == -1)
             {
