@@ -150,7 +150,7 @@ int main(int argc, char *argv[])
 		
 			//recevie a packet
 		 	numbytes = recv(new_fd, recvbuf, BUFSIZE-1, 0);
-			rx_numbytes += numbytes;
+
 
 		 	//Check for Errors
 			if (numbytes == -1) {
@@ -161,7 +161,8 @@ int main(int argc, char *argv[])
 		 		exit(-1);
 		 	}
 		 	
-		 	printf("numbytes: %ld\n", numbytes);
+		 	//this makes sure we keep the total number of bytes in the message
+			rx_numbytes += numbytes;
 		 	
 		 	//copy recv buffer into main buffer
 		 	for(i=0; i<numbytes; i++) {
@@ -175,11 +176,13 @@ int main(int argc, char *argv[])
 				rx_done = true;
 			}		 	
 		}
+	 	printf("rx_numbytes: %ld\n", rx_numbytes);
+	 	
+	 	
 		//make_sure the buffer is null-terminated
 	 	buf[rx_numbytes] = '\0';
  		
 		//Put buffer data in a string
-
 		writestr = (char *)malloc(rx_numbytes * sizeof(char));
 		for (i = 0; i <= rx_numbytes; i++)
 		{
@@ -187,8 +190,6 @@ int main(int argc, char *argv[])
 		}
 		
 
-
-		
 		//Write the data to a file
 		outputfile = fopen(OUTPUT_FILE_PATH, "a+");
 		ret = fputs(writestr, outputfile);
