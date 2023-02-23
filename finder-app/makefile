@@ -1,5 +1,5 @@
 #Add for Assignment4 
-CROSS_COMPILE=
+CROSS_COMPILE=aarch64-none-linux-gnu-
 
 all: writer.c 
 	${CROSS_COMPILE}gcc -o writer writer.c
