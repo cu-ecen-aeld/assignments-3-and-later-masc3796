@@ -5,8 +5,8 @@ CC=gcc
 
 all: writer.c 
 #	${CROSS_COMPILE}gcc -o writer writer.c
-#	${CROSS_COMPILE}${CC} -o writer writer.c
-	$(CC) $(CFLAGS) $(INCLUDES) $(OBJS) -o $(TARGET) $(LDFLAGS)
+	${CROSS_COMPILE}${CC} -o writer writer.c
+#	$(CC) $(CFLAGS) $(INCLUDES) $(OBJS) -o $(TARGET) $(LDFLAGS)
 
 #	gcc -o writer writer.c
 
